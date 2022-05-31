@@ -7,13 +7,7 @@
 *4 从文件读取任意开局的最优解
 *@Catamint
 **************************************
-已知的问题:
-1.square转为整数后储存,开头的0被抹去了
-2.paths没有free
-3.mode1只能输出一个结果
-**************************************
 */
-
 #include <conio.h>
 #include <math.h>
 #include <stdio.h>
@@ -28,24 +22,24 @@
 
 typedef struct ListNode {
     char* square;  // [FLOOR] (宫格)
-    int zero;     // Location of blank square.
-    char* path;   // [TQS]
+    int zero;      // 空白格子(0)的位置.
+    char* path;    // [TQS]
     struct ListNode* next;
     struct ListNode* last;
 } node;
 
 struct answer {
-    int square;       // 盘面.
+    char* square;     // 盘面.
     int step;         // 到达此盘面所用步数.
     char* paths[10];  // "0"的路径(倒序排列).
 } answers[FACTORIAL + 1];
 
-int step = 0;                        // 当前层数/步数.
-int totalSquares = 0;                // amount of squares been visited.
-int visitList[FACTORIAL + 1] = {0};  // if visited turn to 1.
-int stepsList[FLOOR] = {0};          // 存放步数为[]的数量.
-char openingSquare[TQS+5]={'\0'};              // 输入的square,即开局.
-char rangeSquare[TQS+5] = "123456780";
+int step = 0;                          // 当前层数/步数.
+int totalSquares = 0;                  // 已经经过的square数量.
+int visitList[FACTORIAL + 1] = {0};    // 存放square是否已经过(1).
+int stepsList[FLOOR] = {0};            // 存放步数为[]的数量.
+char openingSquare[TQS + 5] = {'\0'};  // 输入的square,即开局.
+char rangeSquare[TQS + 5] = "123456780";
 
 //流程：
 void inatialization();
@@ -55,16 +49,16 @@ void doMode_1();
 node* printNode(node* node);
 void doMode_2();
 void doMode_3();
-int appendAnswer(int square, int id, char* path);
+int appendAnswer(char* square, int id, char* path);
 int printAnswerList(FILE* file);
 int doMode_4();
 int splitByComma(char* line, char* ans[]);
-int arrayToInt(char* array);
 node* bfsToFile(node* headNode, char mode);
 //链表结构：
 node* newList();
 node* newNode(char* square, char* path, int zero);
 void LinkNodeIback(node* parentNode, node* thisNode);
+void freeNode(node* thisNode);
 void deleteNode(node* thisNode);
 //节点结构：
 char* newSquare(char* parentSquare);
@@ -73,7 +67,6 @@ char* newPath(char* parentPath);
 char* add(char* path, int zero);
 //数据操作：
 int haveAnswer(char square[]);
-int openingEqualsTo(char* square);
 int indexOf(char square[]);
 int visited(char square[]);
 int* neighbourOf(int zero);
@@ -85,7 +78,7 @@ int main() {
         printf(
             "[1]=solve a puzzle\t[2]=statistics all\n"
             "[3]=create file\t\t[4]=solve by file\n");
-        printf("Press [?] for help; [q] to quit.\n");
+        printf("Press [q] to quit.\n");
         do {
             printf("\b\b\b   \b\b\b>>");
         } while (getMode() == -1);
@@ -100,7 +93,7 @@ void doMode_1() {
     while (scanTheSquare3() == -1) {
         printf("\n\nREtry:");
     };  //输入.
-    if (openingEqualsTo(rangeSquare)) {
+    if (strcmp(rangeSquare, openingSquare) == 0) {
         printf("Have completed.....\n");  //首次完成检查.
     } else if (!haveAnswer(openingSquare)) {
         printf("Absolutely have no answer!");  //有解检查.
@@ -151,10 +144,10 @@ void doMode_3() {
     printAnswerList(answersFile);
     fclose(answersFile);
 }
-//[mode3] save answers in memory.
-int appendAnswer(int square, int id, char* path) {
-    answers[id].square = square;
-    answers[id].step = step+1;
+//[mode3] 在answers数组中暂存结果.
+int appendAnswer(char* square, int id, char* path) {
+    if (answers[id].square == NULL) answers[id].square = square;
+    answers[id].step = step + 1;
     for (int i = 0; i < 10; i++) {
         if (answers[id].paths[i] == NULL) {
             answers[id].paths[i] = path;
@@ -169,7 +162,7 @@ int printAnswerList(FILE* file) {
     int index;
     for (int line = 0; line < FACTORIAL + 1; line++) {
         index = 0;
-        fprintf(file, "%d,%d,%d", line, answers[line].square,
+        fprintf(file, "%d,%s,%d", line, answers[line].square,
                 answers[line].step);
         while (answers[line].paths[index] != NULL) {
             fprintf(file, ",");
@@ -178,17 +171,21 @@ int printAnswerList(FILE* file) {
         }
         fprintf(file, "\n");
     }
-}
-//[mode 3] 
-int arrayToInt(char* array) {
-    return atoi(array);
+    for (int i = 0; i < FACTORIAL + 1; i++) {
+        for (int j = 0; j < 10; j++) {
+            free(answers[i].square);
+            free(answers[i].paths[j]);
+            answers[i].square = NULL;
+            answers[i].paths[j] = NULL;
+        }
+    }
 }
 
 // 从文件读取任意开局的最优解.
 int doMode_4() {
     FILE* answersFile = NULL;
     char line[500];
-    char* ans[13]={NULL};
+    char* ans[13] = {NULL};
     int index;
     while (scanTheSquare3() == -1) {
         printf("\n\nREtry:");
@@ -198,42 +195,39 @@ int doMode_4() {
         printf("Faild to open the file.\n");
         return -1;
     }  //打开文件.
-    if (openingEqualsTo(rangeSquare)) {
+    if (strcmp(rangeSquare, openingSquare) == 0) {
         printf("Have completed.....\n");  //首次完成检查.
     } else if (!haveAnswer(openingSquare)) {
         printf("Absolutely have no answer!");  //有解检查.
     } else {
         for (int i = 0; i < index + 1; i++) {
-            fgets(line, 500, answersFile); 
+            fgets(line, 500, answersFile);
         }  //指向指定行.
-        
+
         if (splitByComma(line, ans) == -1) {
             printf("File error!");  //文件中找不到此行.
             return -1;
         }
         printf("ID=%s, square =%s\n", ans[0], ans[1]);
         printf("path of '0':\n");
-        for(int i=3; ans[i]; i++){
+        for (int i = 3; ans[i]; i++) {
             char* p = ans[i];
             while (*(++p) != '\0')
                 ;
-            while (p-- != ans[i])
-                printf("%c->", (*p) + 1);
+            while (p-- != ans[i]) printf("%c->", (*p) + 1);
             printf("9\n");
         }
         printf("%s steps in total.\n\n", ans[2]);
     }
 }
 //[mode 4]在逗号处分割字符串.
-int splitByComma(char *line, char *ans[])
-{
-    char *p = line;
+int splitByComma(char* line, char* ans[]) {
+    char* p = line;
     int i = 0;
     ans[0] = strtok(line, ",\n");
     while ((ans[++i] = strtok(NULL, ",\n")) && i < 13)
         ;
-    if (i < 3 || i==12)
-        return -1;
+    if (i < 3 || i == 12) return -1;
     return 0;
 }
 
@@ -246,11 +240,6 @@ void inatialization() {
     }
     for (int i = 0; i < FLOOR; i++) {
         stepsList[i] = 0;
-    }
-    for (int i = 0; i < FACTORIAL + 1; i++) {
-        for (int j = 0; j < 10; j++) {
-            answers[i].paths[j] = NULL;
-        }
     }
 }
 //宽度搜索3
@@ -271,28 +260,31 @@ node* bfsToFile(node* headNode, char mode) {
             tempSquare =
                 swap(newSquare(thisNode->square), thisNode->zero, *neighbour);
             if (visited(tempSquare)) {
-                if (mode == '3' && step + 1 == answers[indexOf(tempSquare)].step) {
-                    appendAnswer(arrayToInt(tempSquare),
-                                  indexOf(tempSquare),
-                                  add(newPath(thisNode->path), *neighbour));
-                }
-                free(tempSquare);
+                if (mode == '3' &&
+                    step + 1 == answers[indexOf(tempSquare)].step) {
+                    appendAnswer(tempSquare, indexOf(tempSquare),
+                                 add(newPath(thisNode->path), *neighbour));
+                } else
+                    free(tempSquare);
                 continue;
             }
             tempNode =
                 newNode(tempSquare, add(newPath(thisNode->path), *neighbour),
                         *neighbour);
             LinkNodeIback(thisNode, tempNode);  //
-            if (mode == '1' && openingEqualsTo(tempSquare))
+            if (mode == '1' && strcmp(tempSquare, openingSquare) == 0)
                 return tempNode;  // return the answer.
             else if (mode == '2') {
                 totalSquares++;
                 stepsList[step]++;
             } else if (mode == '3') {
-                appendAnswer(arrayToInt(tempSquare),
-                              indexOf(tempSquare), tempNode->path);
+                appendAnswer(tempSquare, indexOf(tempSquare), tempNode->path);
             }
         } while (*(++neighbour) != -1);  //
+        if (mode == '1' || mode == '2') {
+            free(thisNode->square);
+            free(thisNode->path);
+        }
         thisNode = thisNode->next;
         deleteNode(thisNode->last);
     } while (step < FLOOR);
@@ -300,7 +292,7 @@ node* bfsToFile(node* headNode, char mode) {
 }
 
 //以下为链表结构及操作.
-// Create a new list and get the initial data (by arg).
+// 创建新链表.
 node* newList() {
     node* head = newNode(NULL, NULL, -1);
     node* firstNode = newNode(rangeSquare, newPath(""), TQS - 1);  //
@@ -324,31 +316,29 @@ node* newNode(char* square, char* path, int zero) {
     thisNode->zero = zero;
     return thisNode;
 }
-// link a node in the back of parent.
+// 在后面连接节点.
 void LinkNodeIback(node* parentNode, node* thisNode) {
     if (parentNode->last != NULL) parentNode->last->next = thisNode;
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;
     parentNode->last = thisNode;
 }
-// delete the node.
+// 删除节点.
 void deleteNode(node* thisNode) {
     if (thisNode != NULL) {
         node* nextNode = thisNode->next;
         node* lastNode = thisNode->last;
         lastNode->next = nextNode;
         if (nextNode != NULL) nextNode->last = lastNode;
-        free(thisNode->square);
-        // free(thisNode->path);  //(mode3需要paths,不free了)/////////(结束时free)
         free(thisNode);
         thisNode = NULL;
     }
 }
 
 //以下为node内部结构及操作.
-// create a new Square from parent.
+// new a Square by args.
 char* newSquare(char* parentSquare) {
-    char* thisSquare = (char*)calloc(TQS+5, sizeof(char));
+    char* thisSquare = (char*)calloc(TQS + 5, sizeof(char));
     if (thisSquare == NULL) {
         printf("malloc failed.\n");
         return NULL;
@@ -356,14 +346,14 @@ char* newSquare(char* parentSquare) {
     strcpy(thisSquare, parentSquare);
     return thisSquare;
 }
-// return the square after swapping(对换).//////要保证zero和neighbour都是int
+// 返回对换后的square.//////要保证zero和neighbour都是int
 char* swap(char* square, int zero, int neighbour) {
     char temp = *(square + zero);
     *(square + zero) = *(square + neighbour);
     *(square + neighbour) = temp;
     return square;
 }
-// create a new path from parent. (have fred)
+// new a path by args. (have fred)
 char* newPath(char* parentPath) {
     char* thisPath = (char*)malloc(sizeof(int) * (FLOOR + 5));
     if (thisPath == NULL) {
@@ -373,7 +363,7 @@ char* newPath(char* parentPath) {
     strcpy(thisPath, parentPath);
     return thisPath;
 }
-// return the path after add.
+// 返回添加末尾后的path.
 char* add(char* path, int zero) {
     *(path + step) = (char)(zero + '0');
     *(path + step + 1) = '\0';
@@ -381,7 +371,7 @@ char* add(char* path, int zero) {
 }
 
 //以下为流程方法.
-// no answer 0 else 1, only when zero is in square[TQS].
+// 判断开局是否有解.
 int haveAnswer(char square[]) {
     int inverseNumber = 0;  //逆序数.
     int square1[TQS];
@@ -405,14 +395,7 @@ int haveAnswer(char square[]) {
     else
         return 0;
 }
-// if completed return 1 else 0.
-int openingEqualsTo(char square[]) {
-    for (int i = 0; i < TQS - 1; i++) {
-        if (square[i] != openingSquare[i]) return 0;
-    }
-    return 1;
-}
-// make an index for each square.
+// 为每个square编特定号码.
 int indexOf(char square[]) {
     int number /*顺序数*/, jiecheng /*阶乘*/;
     int result = 0;
@@ -432,7 +415,7 @@ int indexOf(char square[]) {
     }
     return result;
 }
-// if visited return 1 else 0 && mark.
+// 判断square是否已经过.
 int visited(char square[]) {
     int indexOfSquare = indexOf(square);
     if (visitList[indexOfSquare] == 1)
@@ -442,7 +425,7 @@ int visited(char square[]) {
         return 0;
     }
 }
-// look for the neighbors and return a matrix.(warning:手动释放空间!!)
+// 寻找zero的相邻方块
 int* neighbourOf(int zero) {
     static int neighbour[5] = {-1};
     for (int i = 0, j = 0; i < TQS; i++) {
@@ -470,8 +453,6 @@ int getMode() {
             doMode_3(); break;
         case '4':
             doMode_4(); break;
-        case '?':
-            printf("No help now.\n"); break;
         case 'q':
             exit(0);
         default:
@@ -479,31 +460,39 @@ int getMode() {
     }
     return 0;
 }
-// input a square to begin.
+// 输入开局的square.
 int scanTheSquare3() {
     printf("\ninput the matrix with squares' locations.\n");
     printf("(tips: 0 = blank square; backspace = clear)\n");
     printf("example:\n1 2 3\n4 5 0\n7 8 6\n>>\n");
     char tempChar;
+    int scanned[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int flagged;
     for (int i = 0; i < TQS; i++) {
-        tempChar = getche();
-        while (tempChar < '0' || tempChar >= '0' + TQS) {
+        flagged = 1;
+        while (flagged) {
+            tempChar = getche();
             if (tempChar == '\b') {
-                if (i % ORDER == 0)
+                if (i % ORDER == 0)  // 行首退格: 重新输入
                     return -1;
                 else {
                     i--;
-                    printf("\b \b");
+                    printf("\b \b");  // 行中退格: 退格
                 }
-            } else if (tempChar == '\t')
+            } else if (tempChar == '\t') {
                 return -1;
-            else if (tempChar == '\r') {
+            } else if (tempChar == '\r') {
                 for (int j = 0; j < i % ORDER; j++) {
                     printf("%c ", openingSquare[i - i % ORDER + j]);
                 }
-            } else
+            } else if (tempChar < '0' || tempChar >= '0' + TQS) {
                 printf("\b \b");
-            tempChar = getche();
+            } else if (scanned[(int)tempChar - (int)'0'] == 1) {
+                printf("\b \b");
+            } else {
+                flagged = 0;
+                scanned[(int)tempChar - (int)'0'] = 1;
+            }
         }
         printf(" ");
         openingSquare[i] = tempChar;
