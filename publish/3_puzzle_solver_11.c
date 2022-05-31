@@ -27,7 +27,7 @@
 #define FACTORIAL 362880  // TQS的阶乘.
 
 typedef struct ListNode {
-    int* square;  // [FLOOR] (宫格)
+    char* square;  // [FLOOR] (宫格)
     int zero;     // Location of blank square.
     char* path;   // [TQS]
     struct ListNode* next;
@@ -44,8 +44,8 @@ int step = 0;                        // 当前层数/步数.
 int totalSquares = 0;                // amount of squares been visited.
 int visitList[FACTORIAL + 1] = {0};  // if visited turn to 1.
 int stepsList[FLOOR] = {0};          // 存放步数为[]的数量.
-int openingSquare[TQS];              // 输入的square,即开局.
-int rangeSquare[TQS] = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+char openingSquare[TQS+5]={'\0'};              // 输入的square,即开局.
+char rangeSquare[TQS+5] = "123456780";
 
 //流程：
 void inatialization();
@@ -59,23 +59,23 @@ int appendAnswer(int square, int id, char* path);
 int printAnswerList(FILE* file);
 int doMode_4();
 int splitByComma(char* line, char* ans[]);
-int arrayToInt(int* array, int lenth);
+int arrayToInt(char* array);
 node* bfsToFile(node* headNode, char mode);
 //链表结构：
 node* newList();
-node* newNode(int* square, char* path, int zero);
+node* newNode(char* square, char* path, int zero);
 void LinkNodeIback(node* parentNode, node* thisNode);
 void deleteNode(node* thisNode);
 //节点结构：
-int* newSquare(int* parentSquare);
-int* swap(int* square, int zero, int neighbour);
+char* newSquare(char* parentSquare);
+char* swap(char* square, int zero, int neighbour);
 char* newPath(char* parentPath);
 char* add(char* path, int zero);
 //数据操作：
-int haveAnswer(int square[]);
-int openingEqualsTo(int* square);
-int indexOf(int square[]);
-int visited(int square[]);
+int haveAnswer(char square[]);
+int openingEqualsTo(char* square);
+int indexOf(char square[]);
+int visited(char square[]);
 int* neighbourOf(int zero);
 
 int main() {
@@ -119,7 +119,7 @@ void doMode_1() {
 node* printNode(node* node) {
     printf("square =");
     for (int i = 0; i < TQS; i++) {
-        printf(" %d", node->square[i]);
+        printf(" %c", node->square[i]);
     }
     printf(";\npath of '0' = ");
     for (int i = step; i >= 0; i--) {
@@ -180,13 +180,8 @@ int printAnswerList(FILE* file) {
     }
 }
 //[mode 3] 
-int arrayToInt(int* array, int lenth) {
-    int quare = lenth - 1;
-    int fig = 0;
-    for (int i = 0; i < lenth; i++, quare--) {
-        fig += (int)(pow(10, quare) + 0.5) * array[i];
-    }
-    return fig;
+int arrayToInt(char* array) {
+    return atoi(array);
 }
 
 // 从文件读取任意开局的最优解.
@@ -263,7 +258,7 @@ node* bfsToFile(node* headNode, char mode) {
     node* thisNode = headNode->next;
     int* neighbour = NULL;
     node* tempNode = NULL;
-    int* tempSquare = NULL;
+    char* tempSquare = NULL;
     do {
         if (thisNode == headNode) {
             if (thisNode->next == thisNode) return NULL;
@@ -277,7 +272,7 @@ node* bfsToFile(node* headNode, char mode) {
                 swap(newSquare(thisNode->square), thisNode->zero, *neighbour);
             if (visited(tempSquare)) {
                 if (mode == '3' && step + 1 == answers[indexOf(tempSquare)].step) {
-                    appendAnswer(arrayToInt(tempSquare, TQS),
+                    appendAnswer(arrayToInt(tempSquare),
                                   indexOf(tempSquare),
                                   add(newPath(thisNode->path), *neighbour));
                 }
@@ -294,7 +289,7 @@ node* bfsToFile(node* headNode, char mode) {
                 totalSquares++;
                 stepsList[step]++;
             } else if (mode == '3') {
-                appendAnswer(arrayToInt(tempSquare, TQS),
+                appendAnswer(arrayToInt(tempSquare),
                               indexOf(tempSquare), tempNode->path);
             }
         } while (*(++neighbour) != -1);  //
@@ -316,7 +311,7 @@ node* newList() {
     return head;
 }
 // new a node
-node* newNode(int* square, char* path, int zero) {
+node* newNode(char* square, char* path, int zero) {
     node* thisNode = (node*)malloc(sizeof(node));
     if (thisNode == NULL) {
         printf("malloc failed.\n");
@@ -352,18 +347,18 @@ void deleteNode(node* thisNode) {
 
 //以下为node内部结构及操作.
 // create a new Square from parent.
-int* newSquare(int* parentSquare) {
-    int* thisSquare = (int*)malloc(sizeof(int) * TQS);
+char* newSquare(char* parentSquare) {
+    char* thisSquare = (char*)calloc(TQS+5, sizeof(char));
     if (thisSquare == NULL) {
         printf("malloc failed.\n");
         return NULL;
     }
-    memcpy(thisSquare, parentSquare, sizeof(int) * TQS);
+    strcpy(thisSquare, parentSquare);
     return thisSquare;
 }
-// return the square after swapping(对换).
-int* swap(int* square, int zero, int neighbour) {
-    int temp = *(square + zero);
+// return the square after swapping(对换).//////要保证zero和neighbour都是int
+char* swap(char* square, int zero, int neighbour) {
+    char temp = *(square + zero);
     *(square + zero) = *(square + neighbour);
     *(square + neighbour) = temp;
     return square;
@@ -387,16 +382,17 @@ char* add(char* path, int zero) {
 
 //以下为流程方法.
 // no answer 0 else 1, only when zero is in square[TQS].
-int haveAnswer(int square[]) {
+int haveAnswer(char square[]) {
     int inverseNumber = 0;  //逆序数.
     int square1[TQS];
     int indexOfZero = 0;  // 0的位置.
     for (int i = 0; i < TQS; i++) {
-        if (square[i] == 0) {
+        int current = (int)square[i] - '0';
+        if (current == 0) {
             square1[i] = TQS;
             indexOfZero = i;
         } else {
-            square1[i] = square[i];
+            square1[i] = current;
         }
     }
     for (int i = 0; i < TQS; i++) {
@@ -410,17 +406,18 @@ int haveAnswer(int square[]) {
         return 0;
 }
 // if completed return 1 else 0.
-int openingEqualsTo(int square[]) {
+int openingEqualsTo(char square[]) {
     for (int i = 0; i < TQS - 1; i++) {
         if (square[i] != openingSquare[i]) return 0;
     }
     return 1;
 }
 // make an index for each square.
-int indexOf(int square[]) {
+int indexOf(char square[]) {
     int number /*顺序数*/, jiecheng /*阶乘*/;
     int result = 0;
     for (int i = 0; i < 8; i++) {
+        int current = (int)square[i] - '0';
         number = 0;
         jiecheng = 1;
         if (8 - i != 0) {
@@ -431,12 +428,12 @@ int indexOf(int square[]) {
         for (int j = 0; j <= i; j++) {
             if (square[j] < square[i]) number += 1;
         }
-        result += jiecheng * (square[i] - number);  //获取当前坐标.
+        result += jiecheng * (current - number);  //获取当前坐标.
     }
     return result;
 }
 // if visited return 1 else 0 && mark.
-int visited(int square[]) {
+int visited(char square[]) {
     int indexOfSquare = indexOf(square);
     if (visitList[indexOfSquare] == 1)
         return 1;
@@ -488,7 +485,6 @@ int scanTheSquare3() {
     printf("(tips: 0 = blank square; backspace = clear)\n");
     printf("example:\n1 2 3\n4 5 0\n7 8 6\n>>\n");
     char tempChar;
-    int tempFig;
     for (int i = 0; i < TQS; i++) {
         tempChar = getche();
         while (tempChar < '0' || tempChar >= '0' + TQS) {
@@ -503,15 +499,14 @@ int scanTheSquare3() {
                 return -1;
             else if (tempChar == '\r') {
                 for (int j = 0; j < i % ORDER; j++) {
-                    printf("%d ", openingSquare[i - i % ORDER + j]);
+                    printf("%c ", openingSquare[i - i % ORDER + j]);
                 }
             } else
                 printf("\b \b");
             tempChar = getche();
         }
         printf(" ");
-        tempFig = tempChar - '0';
-        openingSquare[i] = tempFig;
+        openingSquare[i] = tempChar;
         if (i % ORDER == ORDER - 1) printf("\n");
     }
     printf("\n");
