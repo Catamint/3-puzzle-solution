@@ -58,7 +58,7 @@ void doMode_3();
 int appendAnswer(int square, int id, char* path);
 int printAnswerList(FILE* file);
 int doMode_4();
-int splitByComma(char* line, char ans[][FLOOR * 5]);
+int splitByComma(char* line, char* ans[]);
 int arrayToInt(int* array, int lenth);
 node* bfsToFile(node* headNode, char mode);
 //链表结构：
@@ -193,8 +193,7 @@ int arrayToInt(int* array, int lenth) {
 int doMode_4() {
     FILE* answersFile = NULL;
     char line[500];
-    char ans[13][FLOOR * 5];
-    int amountOfAns;
+    char* ans[13]={NULL};
     int index;
     while (scanTheSquare3() == -1) {
         printf("\n\nREtry:");
@@ -212,13 +211,14 @@ int doMode_4() {
         for (int i = 0; i < index + 1; i++) {
             fgets(line, 500, answersFile); 
         }  //指向指定行.
-        if ((amountOfAns = splitByComma(line, ans)) == -1) {
+        
+        if (splitByComma(line, ans) == -1) {
             printf("File error!");  //文件中找不到此行.
             return -1;
         }
         printf("ID=%s, square =%s\n", ans[0], ans[1]);
         printf("path of '0':\n");
-        for (int i = 3; i < amountOfAns; i++) {
+        for(int i=3; ans[i]; i++){
             char* p = ans[i];
             while (*(++p) != '\0')
                 ;
@@ -230,23 +230,16 @@ int doMode_4() {
     }
 }
 //[mode 4]在逗号处分割字符串.
-int splitByComma(char* line, char ans[][FLOOR * 5]) {
-    char* p = line;
-    for (int i = 0; i < 13; i++) {
-        for (int j = 0; j < FLOOR; j++, p++) {
-            if (*p == ',') {
-                ans[i][j] = '\0';
-                p++;
-                break;
-            } else if (*p == '\n') {
-                ans[i][j] = '\0';
-                return i + 1;
-            } else {
-                ans[i][j] = *p;
-            }
-        }
-    }
-    return -1;
+int splitByComma(char *line, char *ans[])
+{
+    char *p = line;
+    int i = 0;
+    ans[0] = strtok(line, ",\n");
+    while ((ans[++i] = strtok(NULL, ",\n")) && i < 13)
+        ;
+    if (i < 3 || i==12)
+        return -1;
+    return 0;
 }
 
 //数据初始化
