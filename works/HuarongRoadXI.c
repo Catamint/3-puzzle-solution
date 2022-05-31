@@ -467,7 +467,6 @@ int* neighbourOf(int zero) {
 }
 
 //以下为输入输出.
-
 // input a mode.
 int getMode() {
     char mode = getche();
