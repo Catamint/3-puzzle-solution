@@ -39,7 +39,7 @@ void doMode_2();
 node* newList();
 node* newNode(int* square, int* path, int zero);
 void LinkNodeIfront(node* parentNode, node* thisNode);
-void LinkNodeIback(node* parentNode, node* thisNode);
+void linkNodeIback(node* parentNode, node* thisNode);
 void deleteNode(node* thisNode);
 //节点操作：
 int* blankSquare();
@@ -143,7 +143,7 @@ node* bfs(node* headNode, char mode){
                         return tempNode;
                     } //return the answer if chose mode 1.
                 } 
-                LinkNodeIback(thisNode,tempNode); //
+                linkNodeIback(thisNode,tempNode); //
             }while(*(++neighbour) != -1);//一个node.
             if(thisNode->next!=NULL){
                 thisNode=thisNode->next;
@@ -199,7 +199,7 @@ void LinkNodeIfront(node* parentNode, node* thisNode){
     parentNode->next = thisNode; 
 }
 //link a node in the back of parent.
-void LinkNodeIback(node* parentNode, node* thisNode){
+void linkNodeIback(node* parentNode, node* thisNode){
     if(parentNode->last!=NULL) parentNode->last->next=thisNode;
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;

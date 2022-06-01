@@ -22,7 +22,7 @@ int zeroOf(int square[]);
 node *newList(int square[]);
 node *blankNode();
 void LinkNodeIfront(node *parentNode, node *thisNode);
-void LinkNodeIback(node *parentNode, node *thisNode);
+void linkNodeIback(node *parentNode, node *thisNode);
 void deleteNodeIfront(node *parentNode);
 void deleteNodeIback(node* parentNode);
 void inputSquare(int square[], node *thisNode);
@@ -62,7 +62,7 @@ void LinkNodeIfront(node* parentNode, node* thisNode){
     parentNode->next = thisNode; 
 }
 //link a node in the back of parent
-void LinkNodeIback(node* parentNode, node* thisNode){
+void linkNodeIback(node* parentNode, node* thisNode){
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;
     parentNode->last = thisNode; 
@@ -157,7 +157,7 @@ void bfs(node* headNode){
             //  /*2*/if:visited
                 
                 inputSquare();
-                LinkNodeIback();
+                linkNodeIback();
                 //
 
             } //一个node

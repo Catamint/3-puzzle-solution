@@ -66,7 +66,7 @@ int arrayToInt(int* array, int lenth);
 node* newList();
 node* newNode(int* square, char* path, int zero);
 void LinkNodeIfront(node* parentNode, node* thisNode);
-void LinkNodeIback(node* parentNode, node* thisNode);
+void linkNodeIback(node* parentNode, node* thisNode);
 void deleteNode(node* thisNode);
 //节点结构：
 int* blankSquare();
@@ -299,7 +299,7 @@ node* bfsToFile(node* headNode, char mode) {
             tempNode =
                 newNode(tempSquare, add(newPath(thisNode->path), *neighbour),
                         *neighbour);
-            LinkNodeIback(thisNode, tempNode);  //
+            linkNodeIback(thisNode, tempNode);  //
             if (mode == '1' && openingEqualsTo(tempSquare))
                 return tempNode;  // return the answer.
             else if (mode == '2') {
@@ -351,7 +351,7 @@ void LinkNodeIfront(node* parentNode, node* thisNode) {
     parentNode->next = thisNode;
 }
 // link a node in the back of parent.
-void LinkNodeIback(node* parentNode, node* thisNode) {
+void linkNodeIback(node* parentNode, node* thisNode) {
     if (parentNode->last != NULL) parentNode->last->next = thisNode;
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;

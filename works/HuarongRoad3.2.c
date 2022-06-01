@@ -23,7 +23,7 @@ int visitList[362881] = { 0 }; //if visited turn 0 to 1
 node* newList(int* firstSquare);
 node* newNode(int* square, int* path, int zero);
 void LinkNodeIfront(node* parentNode, node* thisNode);
-void LinkNodeIback(node* parentNode, node* thisNode);
+void linkNodeIback(node* parentNode, node* thisNode);
 void deleteNode(node* thisNode);
 
 int zeroOf(int* square);
@@ -74,7 +74,7 @@ void LinkNodeIfront(node* parentNode, node* thisNode){
     parentNode->next = thisNode; 
 }
 //link a node in the back of parent
-void LinkNodeIback(node* parentNode, node* thisNode){
+void linkNodeIback(node* parentNode, node* thisNode){
     if(parentNode->last!=NULL) parentNode->last->next=thisNode;
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;
@@ -274,7 +274,7 @@ node* bfs(node* headNode){
                 tempNode=newNode(tempSquare,tempPath,*thisNeighbour);
                 //printNode(tempNode);////
                 if(completed(tempSquare)) return tempNode; 
-                else LinkNodeIback(thisNode,tempNode); //
+                else linkNodeIback(thisNode,tempNode); //
                 //printList(headNode);////
             } //一个node
             free(neighbour);

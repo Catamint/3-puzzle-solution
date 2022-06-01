@@ -28,7 +28,7 @@ node* bfs(node* headNode);
 node* newList(int* firstSquare);
 node* newNode(int* square, int* path, int zero);
 void LinkNodeIfront(node* parentNode, node* thisNode);
-void LinkNodeIback(node* parentNode, node* thisNode);
+void linkNodeIback(node* parentNode, node* thisNode);
 void deleteNode(node* thisNode);
 //
 int* blankSquare();
@@ -119,7 +119,7 @@ node* bfs(node* headNode){
                 totalSquares++;
                 tempPath=newPath(add(thisNode->path,*thisNeighbour));
                 tempNode=newNode(tempSquare,tempPath,*thisNeighbour);
-                LinkNodeIback(thisNode,tempNode); //
+                linkNodeIback(thisNode,tempNode); //
                 //printList(headNode);////
             } //一个node
             free(neighbour);
@@ -174,7 +174,7 @@ void LinkNodeIfront(node* parentNode, node* thisNode){
     parentNode->next = thisNode; 
 }
 //link a node in the back of parent
-void LinkNodeIback(node* parentNode, node* thisNode){
+void linkNodeIback(node* parentNode, node* thisNode){
     if(parentNode->last!=NULL) parentNode->last->next=thisNode;
     thisNode->last = parentNode->last;
     thisNode->next = parentNode;
