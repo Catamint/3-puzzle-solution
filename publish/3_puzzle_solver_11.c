@@ -230,7 +230,7 @@ int printAnswerList(FILE* file) {
     for (int i = 0; i < FACTORIAL + 1; i++) {
         for (int j = 0; j < 10; j++) {
             free(answers[i].square);
-            free(answers[i].paths[j]);
+            //free(answers[i].paths[j]);
             answers[i].square = NULL;
             answers[i].paths[j] = NULL;
         }
@@ -338,7 +338,7 @@ node* bfsToFile(node* headNode, char mode) {
         } while (*(++neighbour) != -1);  //
         if (mode == '1' || mode == '2') {
             free(thisNode->square);
-            free(thisNode->path);
+            //free(thisNode->path);
         }
         thisNode = thisNode->next;
         deleteNode(thisNode->last);
